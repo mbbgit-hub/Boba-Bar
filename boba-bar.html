@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Boba Bar</title>
+<style>
+  :root {
+    --ink: #3B2A45;
+    --lilac: #EDE4FF;
+    --lilac-2: #DCCEFA;
+    --pink: #FF8FB1;
+    --mint: #A8E6CF;
+    --sun: #FFD27A;
+    --taro: #7B57C9;
+    --paper: #FFFDFB;
+    font-family: "Arial Rounded MT Bold", "Nunito", "Varela Round", "SF Pro Rounded", ui-rounded, "Trebuchet MS", system-ui, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    color: var(--ink);
+    font-size: 16px;
+    line-height: 1.45;
+    background:
+      radial-gradient(var(--lilac-2) 2px, transparent 2.6px) 0 0 / 28px 28px,
+      var(--lilac);
+  }
+
+  .app {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 28px 20px 64px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+  }
+
+  @media (min-width: 860px) {
+    .app { grid-template-columns: minmax(0, 1fr) minmax(340px, 430px); align-items: start; }
+    .top { grid-column: 1 / -1; }
+  }
+
+  .top h1 {
+    margin: 0;
+    font-size: clamp(2.2rem, 6vw, 3.4rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+    text-shadow: 3px 3px 0 #fff;
+  }
+  .top p { margin: 8px 0 0; font-size: 1.05rem; }
+
+  /* ---------- stage ---------- */
+  .stage {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .bubble {
+    position: relative;
+    margin: 0 0 14px;
+    padding: 9px 18px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    font-weight: 700;
+    text-align: center;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    bottom: -11px;
+    width: 16px;
+    height: 16px;
+    background: #fff;
+    border-right: 3px solid var(--ink);
+    border-bottom: 3px solid var(--ink);
+    border-bottom-right-radius: 4px;
+    transform: translateX(-50%) rotate(45deg);
+    z-index: -1;
+  }
+
+  .cup-wrap { width: min(320px, 78vw); }
+  .cup-wrap svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+  #cupBody { transform-box: view-box; transform-origin: 150px 400px; }
+  #cupBody.slurp { animation: slurp .55s ease-out; }
+  #cupBody.shake { animation: shake .8s ease-in-out; }
+  #cupBody.shake .jit { animation: jig .2s ease-in-out 4 alternate; }
+  .jit { transform-box: fill-box; transform-origin: center; }
+
+  @keyframes slurp { 35% { transform: scale(.95, 1.04); } 70% { transform: scale(1.02, .98); } }
+  @keyframes shake {
+    15% { transform: rotate(-7deg); }
+    30% { transform: rotate(6deg); }
+    45% { transform: rotate(-5deg); }
+    60% { transform: rotate(4deg); }
+    75% { transform: rotate(-2deg); }
+  }
+  @keyframes jig { to { transform: translate(var(--jx, 0), -7px); } }
+
+  #liquid { transition: transform .75s cubic-bezier(.3, 1.35, .5, 1); }
+  #wave { animation: wave 5s linear infinite; }
+  @keyframes wave { to { transform: translateX(-120px); } }
+
+  .eye { transform-box: fill-box; transform-origin: center; animation: blink 4.6s infinite; }
+  .eye.r { animation-delay: .02s; }
+  @keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+
+  .bob { animation: bob 2.6s ease-in-out infinite alternate; }
+  @keyframes bob { to { transform: translateY(4px); } }
+
+  .bub { animation: rise .95s ease-in forwards; }
+  @keyframes rise {
+    0% { transform: translate(0, 0); opacity: 0; }
+    12% { opacity: 1; }
+    100% { transform: translate(36px, -336px); opacity: 0; }
+  }
+
+  #drinkName {
+    margin: 6px 0 0;
+    min-height: 2.3em;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    font-size: clamp(1.3rem, 3.6vw, 1.7rem);
+    line-height: 1.15;
+  }
+  .details { margin: 0; text-align: center; max-width: 34ch; }
+
+  .sipbar { display: flex; align-items: center; gap: 12px; font-weight: 700; }
+  .dots { display: flex; gap: 6px; }
+  .dots span {
+    width: 16px; height: 16px;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: #fff;
+    transition: background .25s;
+  }
+  .dots span.on { background: var(--pink); }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 4px; }
+  .actions.end { justify-content: flex-start; margin-top: 10px; }
+
+  /* ---------- buttons ---------- */
+  .btn {
+    font: inherit;
+    font-weight: 800;
+    color: var(--ink);
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    padding: .65em 1.35em;
+    box-shadow: 0 4px 0 var(--ink);
+    cursor: pointer;
+    transition: transform .1s, box-shadow .1s;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 5px 0 var(--ink); }
+  .btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--ink); }
+  .btn.pink { background: var(--pink); }
+  .btn.mint { background: var(--mint); }
+  .btn.taro { background: var(--taro); color: #fff; }
+  .btn.big { font-size: 1.05rem; }
+
+  button:focus-visible,
+  input:focus-visible {
+    outline: 3px solid var(--ink);
+    outline-offset: 3px;
+  }
+
+  /* ---------- panel ---------- */
+  .panel {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    border-radius: 28px;
+    box-shadow: 8px 8px 0 var(--ink);
+    padding: 24px 22px 26px;
+  }
+  .panel h2 { margin: 0 0 16px; font-size: 1.4rem; }
+
+  fieldset { border: 0; padding: 0; margin: 0 0 20px; min-width: 0; }
+  legend { padding: 0; margin-bottom: 9px; font-weight: 800; }
+
+  .row { display: flex; flex-wrap: wrap; gap: 9px; }
+
+  .pill { position: relative; display: inline-block; }
+  .pill input, .straw input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+  .pill span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 14px 7px 10px;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+    font-weight: 700;
+    transition: background .15s, transform .1s;
+  }
+  .pill:hover span { transform: translateY(-1px); }
+  .pill input:checked + span { background: var(--c); box-shadow: 0 3px 0 var(--ink); }
+  .pill input:focus-visible + span { outline: 3px solid var(--ink); outline-offset: 3px; }
+
+  .sw, .dot {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2.5px solid var(--ink);
+    border-radius: 50%;
+    background: var(--c, #fff);
+    flex: none;
+  }
+  .d-ice { background: #E4F3FF; border-radius: 4px; transform: rotate(12deg); }
+  .d-boba { background: #55364A; }
+  .d-jelly { background: #FF9EC0; border-radius: 4px; }
+  .d-foam { background: #fff; }
+  .d-sprinkles { background: linear-gradient(90deg, #FF9EC0 33%, #FFD27A 33% 66%, #9AE3B5 66%); border-radius: 4px; }
+
+  .straw { position: relative; display: inline-block; }
+  .straw span {
+    display: block;
+    width: 34px; height: 34px;
+    border: 3px solid var(--ink);
+    border-radius: 50%;
+    background: var(--c);
+    transition: box-shadow .15s;
+  }
+  .straw input:checked + span { box-shadow: 0 0 0 3px var(--paper), 0 0 0 6px var(--ink); }
+  .straw input:focus-visible + span { outline: 3px solid var(--ink); outline-offset: 8px; }
+
+  .range-row { display: flex; align-items: center; gap: 14px; }
+  .range-row output { min-width: 3.2ch; font-weight: 800; text-align: right; }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: 1;
+    min-width: 0;
+    height: 32px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  input[type=range]:focus-visible { border-radius: 12px; }
+  input[type=range]::-webkit-slider-runnable-track {
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--pink) var(--p, 50%), #fff var(--p, 50%));
+    box-shadow: 0 0 0 3px var(--ink);
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 30px; height: 30px;
+    margin-top: -9px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--ink);
+    box-shadow: 0 3px 0 var(--ink);
+  }
+  input[type=range]::-moz-range-track {
+    height: 12px;
+    border-radius: 999px;
+    background: linear-gradient(to right, var(--pink) var(--p, 50%), #fff var(--p, 50%));
+    box-shadow: 0 0 0 3px var(--ink);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    background: #fff;
+    border: 3px solid var(--ink);
+    box-shadow: 0 3px 0 var(--ink);
+  }
+
+  .field label { display: block; font-weight: 800; margin-bottom: 9px; }
+  .field input {
+    width: 100%;
+    font: inherit;
+    font-weight: 700;
+    color: var(--ink);
+    padding: 10px 16px;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 999px;
+  }
+  .field input::placeholder { color: #8b7a94; }
+
+  /* ---------- ticket ---------- */
+  .ticket {
+    width: min(360px, 100%);
+    margin-top: 14px;
+    padding: 18px 20px;
+    background: #fff;
+    border: 3px solid var(--ink);
+    border-radius: 18px;
+    box-shadow: 5px 5px 0 var(--ink);
+    text-align: center;
+  }
+  .ticket[hidden] { display: none; }
+  .ticket.drop { animation: drop .55s cubic-bezier(.3, 1.4, .5, 1); }
+  @keyframes drop { from { transform: translateY(-24px) rotate(-4deg); opacity: 0; } }
+  .ticket:focus { outline: none; }
+  .ticket h2 { margin: 0 0 8px; font-size: 1.15rem; }
+  .ticket .drink { margin: 0; font-size: 1.2rem; font-weight: 800; line-height: 1.2; }
+  .ticket .tear {
+    margin: 12px 0;
+    border: 0;
+    border-top: 3px dashed var(--ink);
+  }
+  .ticket p { margin: 6px 0; }
+  .ticket .btn { margin-top: 8px; }
+
+  /* ---------- confetti ---------- */
+  #confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 20; }
+  #confetti span {
+    position: absolute;
+    border: 2.5px solid var(--ink);
+    animation: burst 1.4s cubic-bezier(.15, .7, .35, 1) forwards;
+  }
+  @keyframes burst {
+    0% { transform: translate(0, 0) scale(.4) rotate(0); opacity: 1; }
+    35% { transform: translate(calc(var(--dx) * .7), -110px) scale(1) rotate(calc(var(--r) * .4)); opacity: 1; }
+    100% { transform: translate(var(--dx), var(--dy)) scale(1) rotate(var(--r)); opacity: 0; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="confetti" aria-hidden="true"></div>
+
+<main class="app">
+  <header class="top">
+    <h1>Boba Bar</h1>
+    <p>Build a cup, give it a shake, then sip it down.</p>
+  </header>
+
+  <section class="stage" aria-label="Your drink">
+    <p class="bubble" id="bubble" role="status">Hi! Pick a tea and I'll get ready.</p>
+
+    <div class="cup-wrap">
+      <svg id="cup" viewBox="0 0 300 430" role="img" aria-labelledby="cupTitle">
+        <title id="cupTitle">Your boba cup</title>
+        <defs>
+          <clipPath id="inside">
+            <path d="M62 100 L238 100 L213 384 Q211 397 198 397 L102 397 Q89 397 87 384 Z"/>
+          </clipPath>
+        </defs>
+
+        <ellipse cx="150" cy="414" rx="82" ry="10" fill="#3B2A45" opacity=".16"/>
+
+        <g id="cupBody">
+          <path d="M62 100 L238 100 L213 384 Q211 397 198 397 L102 397 Q89 397 87 384 Z" fill="#fff" fill-opacity=".78"/>
+
+          <g clip-path="url(#inside)">
+            <g id="liquid" style="transform: translateY(135px)">
+              <path id="wave" fill="#CDB4F6" stroke="#3B2A45" stroke-width="4" stroke-linejoin="round"
+                    d="M-120 0 q30 -9 60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 t60 0 L420 400 L-120 400 Z"/>
+              <g id="ice"></g>
+              <g id="sprinkles" class="bob" style="animation-duration:3.2s"></g>
+              <g id="foam">
+                <g stroke="#3B2A45" stroke-width="4.5" fill="#fff">
+                  <circle cx="112" cy="2" r="15"/><circle cx="133" cy="-8" r="19"/>
+                  <circle cx="163" cy="-8" r="19"/><circle cx="188" cy="2" r="15"/>
+                  <ellipse cx="150" cy="8" rx="62" ry="12"/>
+                </g>
+                <g fill="#fff">
+                  <circle cx="112" cy="2" r="15"/><circle cx="133" cy="-8" r="19"/>
+                  <circle cx="163" cy="-8" r="19"/><circle cx="188" cy="2" r="15"/>
+                  <ellipse cx="150" cy="8" rx="62" ry="12"/>
+                </g>
+              </g>
+            </g>
+            <g id="jelly" style="transition: transform .5s ease"></g>
+            <g id="boba"></g>
+          </g>
+
+          <path d="M78 130 L92 340" stroke="#fff" stroke-width="7" stroke-linecap="round" opacity=".75"/>
+
+          <g id="face">
+            <g id="eyes">
+              <ellipse class="eye l" cx="122" cy="250" rx="6" ry="8" fill="#3B2A45"/>
+              <ellipse class="eye r" cx="162" cy="250" rx="6" ry="8" fill="#3B2A45"/>
+            </g>
+            <g id="eyesHappy" fill="none" stroke="#3B2A45" stroke-width="5" stroke-linecap="round" style="display:none">
+              <path d="M114 254 Q122 240 130 254"/>
+              <path d="M154 254 Q162 240 170 254"/>
+            </g>
+            <circle id="cheekL" cx="104" cy="266" r="8" fill="#FF8FB1"/>
+            <circle id="cheekR" cx="180" cy="266" r="8" fill="#FF8FB1"/>
+            <path id="mouth" d="M128 262 Q142 276 156 262" fill="none" stroke="#3B2A45" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <ellipse id="tongue" cx="142" cy="272" rx="7" ry="4" fill="#FF8FB1" style="display:none"/>
+          </g>
+
+          <path d="M62 100 L238 100 L213 384 Q211 397 198 397 L102 397 Q89 397 87 384 Z"
+                fill="none" stroke="#3B2A45" stroke-width="5" stroke-linejoin="round"/>
+
+          <path d="M70 88 C70 50 110 40 150 40 C190 40 230 50 230 88 Z" fill="#fff" fill-opacity=".9" stroke="#3B2A45" stroke-width="5" stroke-linejoin="round"/>
+          <rect x="50" y="86" width="200" height="18" rx="9" fill="#fff" stroke="#3B2A45" stroke-width="5"/>
+
+          <path d="M222 8 L186 352" stroke="#3B2A45" stroke-width="17" stroke-linecap="round"/>
+          <path id="strawColor" d="M222 8 L186 352" stroke="#FF8FB1" stroke-width="9" stroke-linecap="round"/>
+          <g id="bubbles"></g>
+        </g>
+      </svg>
+    </div>
+
+    <h2 id="drinkName"></h2>
+    <p class="details" id="drinkDetails"></p>
+
+    <div class="sipbar">
+      <div class="dots" id="dots" aria-hidden="true"></div>
+      <span id="sipText"></span>
+    </div>
+
+    <div class="actions">
+      <button class="btn pink big" id="sipBtn" type="button">Sip</button>
+      <button class="btn mint big" id="shakeBtn" type="button">Shake</button>
+    </div>
+
+    <section class="ticket" id="ticket" hidden tabindex="-1" aria-labelledby="ticketTitle">
+      <h2 id="ticketTitle"></h2>
+      <p class="drink" id="ticketDrink"></p>
+      <hr class="tear">
+      <p id="ticketDetails"></p>
+      <p>Ready in about 3 minutes.</p>
+      <button class="btn" id="againBtn" type="button">Start a new cup</button>
+    </section>
+  </section>
+
+  <section class="panel" id="panel" aria-labelledby="panelTitle">
+    <h2 id="panelTitle">Build your cup</h2>
+
+    <fieldset>
+      <legend>Tea</legend>
+      <div class="row" id="flavors"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Sweetness</legend>
+      <div class="range-row">
+        <input type="range" id="sweet" min="0" max="100" step="5" value="50" aria-label="Sweetness">
+        <output id="sweetOut" for="sweet">50%</output>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Toppings and ice</legend>
+      <div class="row" id="extras"></div>
+    </fieldset>
+
+    <fieldset>
+      <legend>Straw</legend>
+      <div class="row" id="straws"></div>
+    </fieldset>
+
+    <div class="field">
+      <label for="nameInput">Name on the cup</label>
+      <input id="nameInput" type="text" maxlength="16" autocomplete="off" placeholder="Your name">
+    </div>
+
+    <div class="actions end">
+      <button class="btn" id="surpriseBtn" type="button">Surprise me</button>
+      <button class="btn taro big" id="orderBtn" type="button">Order this cup</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  const $ = (s) => document.querySelector(s);
+  const NS = 'http://www.w3.org/2000/svg';
+  const el = (tag, attrs, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const INK = '#3B2A45';
+
+  /* ---------- data ---------- */
+  const FLAVORS = {
+    taro:       { name: 'Taro',        color: '#CDB4F6' },
+    matcha:     { name: 'Matcha',      color: '#B5D99C' },
+    strawberry: { name: 'Strawberry',  color: '#FFB3C6' },
+    mango:      { name: 'Mango',       color: '#FFD27A' },
+    brown:      { name: 'Brown sugar', color: '#D9AE85' }
+  };
+  const STRAWS = {
+    pink: ['Pink',   '#FF8FB1'],
+    mint: ['Mint',   '#7FD8B0'],
+    sun:  ['Yellow', '#FFD27A'],
+    sky:  ['Blue',   '#8EC5FF']
+  };
+  const EXTRAS = {
+    boba:      { label: 'Boba',        word: 'boba',        on: 'Pearls, yes.' },
+    jelly:     { label: 'Jelly',       word: 'jelly',       on: 'Jiggly!' },
+    foam:      { label: 'Cream cloud', word: 'cream cloud', on: 'A fluffy cloud on top.' },
+    sprinkles: { label: 'Sprinkles',   word: 'sprinkles',   on: 'Fancy!' }
+  };
+  const LEVELS = [400, 331, 282, 233, 184, 135]; // liquid top by sips left
+  const SIP_MSG = ['Slurp!', 'Mmm!', 'Ahh, so good.', 'Slurrrp!', 'More, please.'];
+  const SHAKE_MSG = ['Whee!', 'Shake shake shake!', 'Wobble wobble!', 'Mixing it up!'];
+  const BAND_MSG = ['Barely sweet. Very refined.', 'A little sweet.', 'Just right.', 'Extra sweet!', 'Maximum sugar. Hold on tight.'];
+
+  const state = {
+    flavor: 'taro',
+    sweet: 50,
+    ice: true,
+    extras: new Set(['boba']),
+    straw: 'pink',
+    sips: 5
+  };
+
+  /* ---------- build controls ---------- */
+  $('#flavors').innerHTML = Object.entries(FLAVORS).map(([k, f]) =>
+    `<label class="pill" style="--c:${f.color}"><input type="radio" name="flavor" value="${k}"><span><i class="sw"></i>${f.name}</span></label>`
+  ).join('');
+
+  $('#extras').innerHTML =
+    `<label class="pill" style="--c:#DCCEFA"><input type="checkbox" name="ice"><span><i class="dot d-ice"></i>Ice</span></label>` +
+    Object.entries(EXTRAS).map(([k, e]) =>
+      `<label class="pill" style="--c:#DCCEFA"><input type="checkbox" name="topping" value="${k}"><span><i class="dot d-${k}"></i>${e.label}</span></label>`
+    ).join('');
+
+  $('#straws').innerHTML = Object.entries(STRAWS).map(([k, [n, c]]) =>
+    `<label class="straw" style="--c:${c}"><input type="radio" name="straw" value="${k}" aria-label="${n} straw"><span></span></label>`
+  ).join('');
+
+  $('#dots').innerHTML = '<span></span>'.repeat(5);
+
+  /* ---------- build cup contents ---------- */
+  const bobaG = $('#boba');
+  [[372, 5, 0], [354, 6, 8], [336, 6, 0]].forEach(([y, count, off]) => {
+    const spacing = 18.5;
+    const span = (count - 1) * spacing;
+    const start = 150 - span / 2 + off / 2;
+    for (let i = 0; i < count; i++) {
+      const g = el('g', { class: 'jit' }, bobaG);
+      g.style.setProperty('--jx', rnd(-5, 5).toFixed(1) + 'px');
+      g.style.animationDelay = Math.floor(rnd(0, 120)) + 'ms';
+      const x = start + i * spacing + rnd(-1.2, 1.2);
+      const yy = y + rnd(-1.2, 1.2);
+      el('circle', { cx: x, cy: yy, r: 9, fill: '#55364A', stroke: INK, 'stroke-width': 2 }, g);
+      el('circle', { cx: x - 3, cy: yy - 3, r: 2.2, fill: '#fff', opacity: .55 }, g);
+    }
+  });
+
+  const jellyG = $('#jelly');
+  const JELLY_COLORS = ['#FF9EC0', '#FFD27A', '#9AE3B5', '#9CC9FF'];
+  for (let i = 0; i < 8; i++) {
+    const g = el('g', { class: 'jit' }, jellyG);
+    g.style.setProperty('--jx', rnd(-5, 5).toFixed(1) + 'px');
+    const size = rnd(15, 19);
+    const x = 96 + i * 12 + rnd(-4, 4);
+    const y = rnd(298, 310);
+    el('rect', {
+      x, y, width: size, height: size, rx: 4,
+      fill: JELLY_COLORS[i % JELLY_COLORS.length], stroke: INK, 'stroke-width': 2.5,
+      transform: `rotate(${rnd(-25, 25).toFixed(0)} ${x + size / 2} ${y + size / 2})`
+    }, g);
+  }
+
+  const iceG = $('#ice');
+  [[92, -6, 28, 14, 0], [140, 2, 30, -12, .8], [186, -4, 26, 22, 1.5]].forEach(([x, y, s, r, d]) => {
+    const g = el('g', { class: 'bob' }, iceG);
+    g.style.animationDelay = d + 's';
+    el('rect', {
+      x, y, width: s, height: s, rx: 7,
+      fill: '#fff', 'fill-opacity': .55, stroke: INK, 'stroke-width': 3.5,
+      transform: `rotate(${r} ${x + s / 2} ${y + s / 2})`
+    }, g);
+    el('path', {
+      d: `M${x + 6} ${y + 8} L${x + 6} ${y + 15}`, stroke: '#fff', 'stroke-width': 3, 'stroke-linecap': 'round',
+      transform: `rotate(${r} ${x + s / 2} ${y + s / 2})`
+    }, g);
+  });
+
+  const sprG = $('#sprinkles');
+  const SPR_COLORS = ['#FF8FB1', '#FFD27A', '#fff', '#7FD8B0', '#8EC5FF'];
+  for (let i = 0; i < 18; i++) {
+    const x = rnd(88, 212), y = rnd(24, 96);
+    el('rect', {
+      x, y, width: 10, height: 4.5, rx: 2.2,
+      fill: SPR_COLORS[i % SPR_COLORS.length],
+      transform: `rotate(${rnd(0, 180).toFixed(0)} ${x + 5} ${y + 2})`
+    }, sprG);
+  }
+
+  /* ---------- helpers ---------- */
+  const bubble = $('#bubble');
+  const say = (t) => { bubble.textContent = t; };
+  const has = (k) => state.extras.has(k);
+
+  const band = (s) => (s <= 20 ? 0 : s <= 45 ? 1 : s <= 70 ? 2 : s <= 90 ? 3 : 4);
+  let lastBand = band(state.sweet);
+
+  const cupBody = $('#cupBody');
+  function play(cls, ms) {
+    cupBody.classList.remove('slurp', 'shake');
+    void cupBody.getBoundingClientRect();
+    cupBody.classList.add(cls);
+    setTimeout(() => cupBody.classList.remove(cls), ms);
+  }
+
+  function listWords(arr) {
+    if (arr.length <= 1) return arr.join('');
+    return arr.slice(0, -1).join(', ') + ' & ' + arr[arr.length - 1];
+  }
+
+  function drinkName() {
+    const adj = ['Zen', 'Mellow', 'Sunny', 'Giddy', 'Sugar-rush'][band(state.sweet)];
+    const words = Object.keys(EXTRAS).filter(has).map((k) => EXTRAS[k].word);
+    let withStr = '';
+    if (words.length >= 4) withStr = ' with everything';
+    else if (words.length) withStr = ' with ' + listWords(words);
+    return `${state.ice ? 'Iced ' : ''}${adj} ${FLAVORS[state.flavor].name}${withStr}`;
+  }
+
+  function drinkDetails() {
+    return `${FLAVORS[state.flavor].name} tea, ${state.sweet}% sugar, ${state.ice ? 'ice' : 'no ice'}, ${STRAWS[state.straw][0].toLowerCase()} straw.`;
+  }
+
+  /* ---------- face ---------- */
+  let temp = null, tempTimer = null;
+  function mood() {
+    if (state.sips === 0) return 'sad';
+    if (state.sweet <= 20) return 'flat';
+    if (state.sweet >= 71) return 'happy';
+    return 'smile';
+  }
+  const MOUTHS = {
+    flat:  ['M130 266 L154 266', 'none'],
+    smile: ['M128 262 Q142 276 156 262', 'none'],
+    happy: ['M126 260 Q142 292 158 260 Z', INK],
+    sip:   ['M136 268 C136 258 148 258 148 268 C148 278 136 278 136 268 Z', INK],
+    sad:   ['M130 274 Q142 260 154 274', 'none']
+  };
+  function renderFace() {
+    const m = temp || mood();
+    const [d, fill] = MOUTHS[m];
+    const mouth = $('#mouth');
+    mouth.setAttribute('d', d);
+    mouth.setAttribute('fill', fill);
+    $('#tongue').style.display = m === 'happy' ? '' : 'none';
+    $('#eyes').style.display = m === 'happy' ? 'none' : '';
+    $('#eyesHappy').style.display = m === 'happy' ? '' : 'none';
+    const cheek = (0.35 + 0.6 * state.sweet / 100).toFixed(2);
+    $('#cheekL').setAttribute('opacity', cheek);
+    $('#cheekR').setAttribute('opacity', cheek);
+  }
+
+  /* ---------- render ---------- */
+  const sweetEl = $('#sweet');
+  function render() {
+    $('#wave').setAttribute('fill', FLAVORS[state.flavor].color);
+    $('#liquid').style.transform = `translateY(${LEVELS[state.sips]}px)`;
+    $('#ice').style.display = state.ice ? '' : 'none';
+    $('#foam').style.display = has('foam') ? '' : 'none';
+    $('#sprinkles').style.display = has('sprinkles') ? '' : 'none';
+    $('#jelly').style.display = has('jelly') ? '' : 'none';
+    $('#jelly').style.transform = has('boba') ? 'translateY(0)' : 'translateY(40px)';
+    $('#boba').style.display = has('boba') ? '' : 'none';
+    $('#strawColor').setAttribute('stroke', STRAWS[state.straw][1]);
+
+    sweetEl.style.setProperty('--p', state.sweet + '%');
+    $('#sweetOut').textContent = state.sweet + '%';
+
+    const name = drinkName();
+    $('#drinkName').textContent = name;
+    $('#drinkDetails').textContent = drinkDetails();
+    $('#cupTitle').textContent = `${name}. ${state.sips} of 5 sips left.`;
+
+    document.querySelectorAll('#dots span').forEach((d, i) => d.classList.toggle('on', i < state.sips));
+    $('#sipText').textContent = state.sips === 0 ? 'Empty' : `${state.sips} ${state.sips === 1 ? 'sip' : 'sips'} left`;
+    $('#sipBtn').textContent = state.sips === 0 ? 'Refill' : 'Sip';
+
+    renderFace();
+  }
+
+  function syncControls() {
+    document.querySelectorAll('input[name=flavor]').forEach((i) => { i.checked = i.value === state.flavor; });
+    document.querySelectorAll('input[name=straw]').forEach((i) => { i.checked = i.value === state.straw; });
+    document.querySelectorAll('input[name=topping]').forEach((i) => { i.checked = has(i.value); });
+    document.querySelector('input[name=ice]').checked = state.ice;
+    sweetEl.value = state.sweet;
+  }
+
+  /* ---------- actions ---------- */
+  function bubbles() {
+    const layer = $('#bubbles');
+    for (let i = 0; i < 4; i++) {
+      const c = el('circle', { class: 'bub', cx: 186 + rnd(-1, 1), cy: 346, r: 3, fill: '#fff' }, layer);
+      c.style.animationDelay = i * 120 + 'ms';
+      c.addEventListener('animationend', () => c.remove());
+    }
+  }
+
+  function sip() {
+    if (state.sips === 0) { refill(); return; }
+    state.sips--;
+    temp = 'sip';
+    clearTimeout(tempTimer);
+    tempTimer = setTimeout(() => { temp = null; renderFace(); }, 900);
+    play('slurp', 600);
+    bubbles();
+    if (state.sips === 0) say(has('boba') ? 'Only pearls left. Chew time.' : 'All gone. Refill?');
+    else say(pick(SIP_MSG));
+    render();
+  }
+
+  function refill() {
+    state.sips = 5;
+    say('Fresh cup!');
+    render();
+  }
+
+  function shake() {
+    play('shake', 850);
+    say(pick(SHAKE_MSG));
+  }
+
+  function surprise() {
+    state.flavor = pick(Object.keys(FLAVORS));
+    state.sweet = Math.round(rnd(0, 20)) * 5;
+    state.ice = Math.random() > 0.4;
+    const keys = Object.keys(EXTRAS).sort(() => Math.random() - 0.5);
+    state.extras = new Set(keys.slice(0, Math.floor(rnd(0, 4))));
+    state.straw = pick(Object.keys(STRAWS));
+    state.sips = 5;
+    lastBand = band(state.sweet);
+    syncControls();
+    render();
+    play('shake', 850);
+    say('Surprise! Try this one.');
+  }
+
+  function confetti() {
+    if (reduced()) return;
+    const layer = $('#confetti');
+    const r = $('#cup').getBoundingClientRect();
+    const colors = ['#FF8FB1', '#A8E6CF', '#FFD27A', '#CDB4F6', '#55364A'];
+    for (let i = 0; i < 30; i++) {
+      const s = document.createElement('span');
+      const size = 9 + Math.random() * 8;
+      s.style.left = (r.left + r.width / 2) + 'px';
+      s.style.top = (r.top + 50) + 'px';
+      s.style.width = s.style.height = size + 'px';
+      s.style.background = colors[i % colors.length];
+      s.style.borderRadius = i % 3 === 0 ? '30%' : '50%';
+      s.style.setProperty('--dx', ((Math.random() - 0.5) * 380).toFixed(0) + 'px');
+      s.style.setProperty('--dy', (200 + Math.random() * 260).toFixed(0) + 'px');
+      s.style.setProperty('--r', (Math.random() * 720).toFixed(0) + 'deg');
+      s.style.animationDelay = Math.floor(Math.random() * 140) + 'ms';
+      layer.appendChild(s);
+      s.addEventListener('animationend', () => s.remove());
+    }
+  }
+
+  function order() {
+    const num = Math.floor(rnd(100, 999));
+    const who = $('#nameInput').value.trim();
+    const t = $('#ticket');
+    $('#ticketTitle').textContent = who ? `Order #${num} for ${who}` : `Order #${num}`;
+    $('#ticketDrink').textContent = drinkName();
+    $('#ticketDetails').textContent = drinkDetails();
+    t.hidden = false;
+    t.classList.remove('drop');
+    void t.offsetWidth;
+    t.classList.add('drop');
+    say('Order placed. Thank you!');
+    confetti();
+    t.focus({ preventScroll: true });
+    t.scrollIntoView({ block: 'nearest', behavior: reduced() ? 'auto' : 'smooth' });
+  }
+
+  /* ---------- events ---------- */
+  $('#panel').addEventListener('change', (e) => {
+    const t = e.target;
+    if (t.name === 'flavor') {
+      state.flavor = t.value;
+      say(`${FLAVORS[t.value].name}. Good pick.`);
+    } else if (t.name === 'ice') {
+      state.ice = t.checked;
+      say(t.checked ? 'Nice and chilly.' : 'No ice. Room temperature it is.');
+    } else if (t.name === 'topping') {
+      if (t.checked) { state.extras.add(t.value); say(EXTRAS[t.value].on); }
+      else { state.extras.delete(t.value); say(`No ${EXTRAS[t.value].word}.`); }
+    } else if (t.name === 'straw') {
+      state.straw = t.value;
+      say(`${STRAWS[t.value][0]} straw. Cute.`);
+    } else {
+      return;
+    }
+    render();
+  });
+
+  sweetEl.addEventListener('input', () => {
+    state.sweet = Number(sweetEl.value);
+    const b = band(state.sweet);
+    if (b !== lastBand) { lastBand = b; say(BAND_MSG[b]); }
+    render();
+  });
+
+  $('#sipBtn').addEventListener('click', sip);
+  $('#shakeBtn').addEventListener('click', shake);
+  $('#surpriseBtn').addEventListener('click', surprise);
+  $('#orderBtn').addEventListener('click', order);
+  $('#againBtn').addEventListener('click', () => {
+    $('#ticket').hidden = true;
+    refill();
+    $('#orderBtn').focus();
+  });
+
+  /* ---------- go ---------- */
+  syncControls();
+  render();
+})();
+</script>
+</body>
+</html>
